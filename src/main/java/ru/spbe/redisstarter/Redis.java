@@ -78,11 +78,11 @@ public class Redis {
 
     /**
      * Отправляет сообщения подписчика
-     * @param topicName имя топика
+     * @param channel имя топика
      * @param message сообщение
      */
-    public void publishMessage(String topicName, String message){
-        jedis.publish(topicName, message);
+    public void publishMessage(String channel, String message){
+        jedis.publish(channel, message);
     }
 
     /**
