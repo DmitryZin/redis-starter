@@ -1,11 +1,8 @@
 package ru.spbe.redisstarter;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPubSub;
 
 import java.util.Set;
 
@@ -15,20 +12,11 @@ import java.util.Set;
  * Требует @Bean jedis с уже настроенным подключением к БД
  * redis.host = ... redis.port = ....
  *
- * Есть возможность подключить "слушателя" сообщений
- * В данной реализации только одного (пока нет необходимости их делать несколько)
- * Слушатель должен имплиментировать интерфейс {@link IRedisSubscriber}
  */
 @Slf4j
 @RequiredArgsConstructor
 public class Redis {
     private final Jedis jedis;
-
-    @Setter
-    @Getter
-    private IRedisSubscriber subscriber;
-
-    private JedisPubSub jedisPubSub;
 
     /**
      * Возвращает все значения множества
@@ -83,41 +71,6 @@ public class Redis {
      */
     public void publishMessage(String channel, String message){
         jedis.publish(channel, message);
-    }
-
-    /**
-     * Подписаться на сообщения - создать "слушателя"
-     */
-    public void subscribe(){
-        if(subscriber == null){
-            log.info("subscriber is null");
-            return;
-        }
-        jedisPubSub = new JedisPubSub(){
-            @Override
-            public void onMessage(String channel, String message){
-                subscriber.onMessage(channel, message);
-            }
-        };
-
-        new Thread(() -> {
-            try{
-                jedis.subscribe(jedisPubSub, subscriber.CHANNEL_NAME);
-                log.info("Subscription success.");
-            }
-            catch(Exception e){
-                log.error("Subscribing failed.", e);
-            }
-        }).start();
-    }
-    /**
-     * отписаться от сообщений
-     */
-    public void unSubscribe(){
-        if(jedisPubSub != null) {
-            jedisPubSub.unsubscribe();
-            jedisPubSub = null;
-        }
     }
 
     /**
