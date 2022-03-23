@@ -3,6 +3,7 @@ package ru.spbe.redisstarter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
 
 import java.util.Set;
 
@@ -51,9 +52,11 @@ public class Redis {
      * @param value  добавляемые значения
      */
     public void addValues(String dataSetName, Set<String> value){
+        Pipeline pipeline = jedis.pipelined();
         for (String s : value) {
-            addValue(dataSetName, s);
+            pipeline.sadd(dataSetName, s);
         }
+        pipeline.sync();
     }
 
     /**
