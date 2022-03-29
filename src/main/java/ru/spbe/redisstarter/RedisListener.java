@@ -2,7 +2,6 @@ package ru.spbe.redisstarter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 
 /**
@@ -13,20 +12,19 @@ import redis.clients.jedis.JedisPubSub;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class RedisSubscriber{
-    private final Jedis jedis;
-    private final IRedisSubscriber subscriber;
+public class RedisListener{
 
+    private final Redis redis;
+    private final IRedisSubscriber subscriber;
+    private final RedisSet set;
     private JedisPubSub jedisPubSub;
 
     /**
      * отписаться от сообщений
      */
     public void unSubscribe(){
-        if(jedisPubSub != null) {
-            jedisPubSub.unsubscribe();
-            jedisPubSub = null;
-        }
+        redis.unSubscribe(jedisPubSub);
+        jedisPubSub = null;
     }
 
     /**
@@ -44,19 +42,11 @@ public class RedisSubscriber{
         jedisPubSub = new JedisPubSub(){
             @Override
             public void onMessage(String channel, String message){
-                    subscriber.onMessage(message);
+                subscriber.onMessage(message);
             }
         };
 
-        new Thread(() -> {
-            try{
-                jedis.subscribe(jedisPubSub, subscriber.getChannelName());
-                log.info("Subscription success.");
-            }
-            catch(Exception e){
-                log.error("Subscribing failed.", e);
-            }
-        }).start();
+        redis.subscribe(jedisPubSub, set.getChannelName());
     }
 
 }

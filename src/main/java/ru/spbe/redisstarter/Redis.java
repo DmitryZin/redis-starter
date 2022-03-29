@@ -1,8 +1,8 @@
 package ru.spbe.redisstarter;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Pipeline;
 
 import java.util.Set;
@@ -15,9 +15,18 @@ import java.util.Set;
  *
  */
 @Slf4j
-@RequiredArgsConstructor
 public class Redis {
+    private final String host;
+    private final int port;
+
     private final Jedis jedis;
+
+    public Redis(String host, int port) {
+        this.host = host;
+        this.port = port;
+        jedis = new Jedis(host, port);
+        jedis.connect();
+    }
 
     /**
      * Возвращает все значения множества
@@ -34,6 +43,9 @@ public class Redis {
      * @param value  добавляемое значение
      */
     public void addValue(String dataSetName, String value){
+
+        if (!jedis.isConnected())
+            jedis.connect();
         jedis.sadd(dataSetName, value);
     }
 
@@ -99,6 +111,35 @@ public class Redis {
      */
     public void flushDB(){
         jedis.flushDB();
+    }
+
+    /**
+     * Подписаться на сообщения (например, обновлять локальные справочники)
+     * @param jedisPubSub -- что делать при подписке
+     * @param channel -- канал, на который подписываемся
+     */
+    public void subscribe(JedisPubSub jedisPubSub, String channel){
+        new Thread(() -> {
+            try{
+
+                Jedis subscriberJedis = new Jedis(this.host, this.port);
+                subscriberJedis.subscribe(jedisPubSub, channel);
+                log.info("Subscription success.");
+            }
+            catch(Exception e){
+                log.error("Subscribing failed.", e);
+            }
+        }).start();
+    }
+
+    /**
+     * Отписаться
+     * @param jedisPubSub отписываемый подписчик
+     */
+    public void unSubscribe(JedisPubSub jedisPubSub){
+        if(jedisPubSub != null) {
+            jedisPubSub.unsubscribe();
+        }
     }
 
 }

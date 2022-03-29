@@ -1,5 +1,5 @@
 package ru.spbe.redisstarter;
 
-public interface IRedisSubscriber extends IRedisSet{
+public interface IRedisSubscriber{
     void onMessage(String message);
 }
