@@ -9,16 +9,23 @@ import java.util.Set;
 
 /**
  * Класс {@link Redis} реализует сервис по работе с данными БД Redis
- * Бин заказывается настройкой redis.enabled = true
- * Требует @Bean jedis с уже настроенным подключением к БД
- * redis.host = ... redis.port = ....
- *
+ * Обертка над классом Jedis, чтоб упростить подписку на каналы
+ * и спрятать массовое добавление в одном пакете в простой метод
  */
 @Slf4j
 public class Redis {
+    /**
+     * хост сервера Redis
+     */
     private final String host;
+    /**
+     * порт сервера Redis
+     */
     private final int port;
 
+    /**
+     * сам обертываемый Jedis
+     */
     private final Jedis jedis;
 
     public Redis(String host, int port) {
