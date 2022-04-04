@@ -5,6 +5,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.Pipeline;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,6 +37,40 @@ public class Redis {
     }
 
     /**
+     * Очистить БД
+     */
+    public void flushDB(){
+        jedis.flushDB();
+    }
+
+    /**
+     * Установить обычное ключ-значение в БД
+     * @param keyName ключ
+     * @param value значение
+     */
+    public void addValueToKey(String keyName, String value) {
+        jedis.set(keyName, value);
+    }
+
+    /**
+     * Получить обычное ключ-значеие из БД
+     * @param keyName ключ
+     * @return значение ключа
+     */
+    public String getValueFromKey(String keyName) {
+        return jedis.get(keyName);
+    }
+
+    /**
+     * Удалить ключ-значеие из БД
+     * @param keyName ключ
+     */
+    public void delValueFromKey(String keyName) {
+        jedis.del(keyName);
+    }
+
+
+    /**
      * Возвращает все значения множества
      * @param dataSetName  имя множества
      * @return  содержимое множества
@@ -49,7 +84,7 @@ public class Redis {
      * @param dataSetName  имя множества
      * @param value  добавляемое значение
      */
-    public void addValue(String dataSetName, String value){
+    public void addValueToDataSet(String dataSetName, String value){
 
         if (!jedis.isConnected())
             jedis.connect();
@@ -61,7 +96,7 @@ public class Redis {
      * @param dataSetName имя множества
      * @param value удаляемое значение
      */
-    public void delValue(String dataSetName, String value){
+    public void delValueFromDataSet(String dataSetName, String value){
         jedis.srem(dataSetName, value);
     }
 
@@ -70,7 +105,7 @@ public class Redis {
      * @param dataSetName  имя множества
      * @param value  добавляемые значения
      */
-    public void addValues(String dataSetName, Set<String> value){
+    public void addValuesToDataSet(String dataSetName, Set<String> value){
         Pipeline pipeline = jedis.pipelined();
         for (String s : value) {
             pipeline.sadd(dataSetName, s);
@@ -87,37 +122,64 @@ public class Redis {
     }
 
     /**
+     * Получить справочник
+     * @param dataSetName
+     * из ножества ключ/значение
+     */
+    public Map<String, String> getKeyDataSet(String dataSetName){ return jedis.hgetAll(dataSetName); }
+
+    /**
+     * Получить значение из справочника по ключу
+     * @param dataSetName имя справочника
+     * @param key ключ
+     * @return значение ключа из справочника
+     */
+    public String getValueFromKeyDataSet(String dataSetName, String key){
+        return jedis.hget(dataSetName, key);
+    }
+
+    /**
+     * Добавить значение в спровочник
+     * @param dataSetName имя справочника
+     * состоящего из ключ/значение
+     */
+    public void addValueToKeyDataSet(String dataSetName, String key, String value){
+        jedis.hset(dataSetName, key, value);
+    }
+
+    /**
+     * Добавить значения в спровочник
+     * @param dataSetName имя справочника
+     * состоящего из ключ/значение
+     */
+    public void addValuesToKeyDataSet(String dataSetName, Map<String, String> keyValue){
+        jedis.hset(dataSetName, keyValue);
+    }
+
+    /**
+     * Удалить значение из справочника по ключу
+     * @param dataSetName имя справочника
+     * @param key ключ
+     */
+    public void delValueFromKeyDataSet(String dataSetName, String key){
+        jedis.hdel(dataSetName, key);
+    }
+
+    /**
+     * Очищает ключ множество
+     * @param dataSetName имя множества
+     */
+    public void clearKeyDataSet(String dataSetName){
+        jedis.del(dataSetName);
+    }
+
+    /**
      * Отправляет сообщения подписчика
      * @param channel имя топика
      * @param message сообщение
      */
     public void publishMessage(String channel, String message){
         jedis.publish(channel, message);
-    }
-
-    /**
-     * Установить обычное ключ-значение в БД
-     * @param keyName ключ
-     * @param value значение
-     */
-    public void setKeyValue(String keyName, String value) {
-        jedis.set(keyName, value);
-    }
-
-    /**
-     * Получить обычное ключ-значеие из БД
-     * @param keyName ключ
-     * @return значение ключа
-     */
-    public String getKeyValue(String keyName) {
-        return jedis.get(keyName);
-    }
-
-    /**
-     * Очистить БД
-     */
-    public void flushDB(){
-        jedis.flushDB();
     }
 
     /**
